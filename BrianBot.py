@@ -27,6 +27,19 @@ while leadText.find("\n") >0:
 
 print(leaderboard)
 
+f = open("longest.txt", "r")
+longText = f.read()
+f.close()
+
+mp = longText.find(":")
+
+longestUN = longText[:mp]
+longestTime = float(longText[mp+1:])
+
+print(longestUN, longestTime)
+
+
+
 @client.event
 async def on_ready():   
     print('Logged in as')
@@ -56,7 +69,7 @@ def containsAllKeywords(message):
     return contAll
 
 def leaderboardToText():
-    global leaderboard
+    global leaderboard, longestTime, longestUN
     retStr = ""
 
     sort = {}
@@ -72,7 +85,8 @@ def leaderboardToText():
         totalTime = round(sort[mem]/3600, 2)
         retStr = retStr + str(mem) + "\t" + str(totalTime) + " hours\n"
 
-    return "Leaderboard:\n" + retStr
+    ls = "The longest Brian streak is " + str(round(longestTime/3600, 2)) + " hours held by " + longestUN
+    return ls + "\n\nLeaderboard:\n" + retStr
 
 def updateLeaderboardTxt():
     global leaderboard
@@ -84,14 +98,21 @@ def updateLeaderboardTxt():
     f.close()
 
 
+def updateLongestTxt():
+    global longestTime, longestUN
+
+    f = open("longest.txt", "w")
+    f.write(longestUN + ":" + str(longestTime))
+
+
 @client.event        
 async def on_message(message):
-    global timeToWaitBetweenBrians, lastTimeBrianWasAssigned, lastUser, leaderboard, firstTime, channelText
+    global timeToWaitBetweenBrians, lastTimeBrianWasAssigned, lastUser, leaderboard, firstTime, channelText, longestTime, longestUN
     channel = message.channel
     user = message.author
     guild = message.guild
     print("message")
-    brianRole = discord.utils.get(guild.roles, id = int(750022258432671935))  #750022258432671935_test 267495672041832448_prod
+    brianRole = discord.utils.get(guild.roles, id = int(267495672041832448))  #750022258432671935_test 267495672041832448_prod
     
     if str(channel) == channelText and str(message.content).find("leaderboard") >= 0:
         await channel.send(leaderboardToText())
@@ -101,16 +122,25 @@ async def on_message(message):
             lastMem = await removeAllBrians(brianRole)
             await addUserToBrian(user, brianRole)
             
-            await channel.send("The new Brian is " + str(user.nick))
+            await channel.send("The Brian role is now assigned to " + str(user.nick))
             print("assigned new brian to:" + str(user.nick))
 
             if firstTime:
                 firstTime = False
             else:
+                deltaT = (time.time() - lastTimeBrianWasAssigned)
+
+                if deltaT > longestTime:
+                    print("new long time")
+                    longestUN = str(lastMem)
+                    longestTime = deltaT
+                    updateLongestTxt()
+                    await channel.send(longestUN + " just set the new record for longest Brian streak with a time of " + str(round(longestTime/3600, 2)) + " hours")
+
                 if str(lastMem) in leaderboard:
-                    leaderboard[str(lastMem)] = leaderboard[str(lastMem)] + (time.time() - lastTimeBrianWasAssigned)
+                    leaderboard[str(lastMem)] = leaderboard[str(lastMem)] + deltaT
                 else:
-                    leaderboard[str(lastMem)] = (time.time() - lastTimeBrianWasAssigned)
+                    leaderboard[str(lastMem)] = deltaT
 
             print(leaderboard)
             updateLeaderboardTxt()
@@ -127,4 +157,4 @@ async def on_message(message):
                 await channel.send("You must wait another " + str(secondsToWait) + " seconds")
             #say how much more time must be waited
 
-client.run('Njk2MDQwMDA5MzE2MTcxODA3.Xoi7xg.XoNVal5svplJnTzvta8OgcWikU') #M
+client.run('NzQ5ODIzMzE1MjA3NTIwMzM3.X0xlYQ.FhPaHuRPb25sO5JbKR6gJHLI_f')
