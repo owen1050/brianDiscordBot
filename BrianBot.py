@@ -19,12 +19,13 @@ while leadText.find("\n") >0:
 
     colI = line.find(":")
     name = line[:colI]
-    time = line[colI+1:]
+    timeV = line[colI+1:]
 
-    leaderboard[name] = float(time)
-    print(name, time)
+    leaderboard[name] = float(timeV)
+    print(name, timeV)
     leadText = leadText[eolI + 1:]
 
+print(leaderboard)
 
 @client.event
 async def on_ready():   
@@ -57,11 +58,21 @@ def containsAllKeywords(message):
 def leaderboardToText():
     global leaderboard
     retStr = ""
-    for mem in leaderboard:
-        totalTime = round(leaderboard[mem]/3600, 2)
-        retStr = retStr + mem + " " * (40-len(mem))+ str(totalTime) + " hours\n"
 
-    return retStr
+    sort = {}
+    while len(leaderboard) > 0:
+        m = max(leaderboard, key=leaderboard.get)
+        sort[m] = leaderboard[m]
+        del leaderboard[m]
+
+    leaderboard = sort
+    
+    print(sort)
+    for mem in sort:
+        totalTime = round(sort[mem]/3600, 2)
+        retStr = retStr + str(mem) + "\t" + str(totalTime) + " hours\n"
+
+    return "Leaderboard:\n" + retStr
 
 def updateLeaderboardTxt():
     global leaderboard
@@ -80,13 +91,13 @@ async def on_message(message):
     user = message.author
     guild = message.guild
     print("message")
-    brianRole = discord.utils.get(guild.roles, id = int(750022258432671935))
+    brianRole = discord.utils.get(guild.roles, id = int(750022258432671935))  #750022258432671935_test 267495672041832448_prod
     
     if str(channel) == channelText and str(message.content).find("leaderboard") >= 0:
         await channel.send(leaderboardToText())
 
     if str(channel) == channelText and containsAllKeywords(message.content):
-        if time.time() - lastTimeBrianWasAssigned > timeToWaitBetweenBrians:
+        if (time.time() - lastTimeBrianWasAssigned) > timeToWaitBetweenBrians:
             lastMem = await removeAllBrians(brianRole)
             await addUserToBrian(user, brianRole)
             
@@ -96,11 +107,12 @@ async def on_message(message):
             if firstTime:
                 firstTime = False
             else:
-                if lastMem in leaderboard:
-                    leaderboard[lastMem] = leaderboard[lastMem] + (time.time() - lastTimeBrianWasAssigned)
+                if str(lastMem) in leaderboard:
+                    leaderboard[str(lastMem)] = leaderboard[str(lastMem)] + (time.time() - lastTimeBrianWasAssigned)
                 else:
-                    leaderboard[lastMem] = (time.time() - lastTimeBrianWasAssigned)
+                    leaderboard[str(lastMem)] = (time.time() - lastTimeBrianWasAssigned)
 
+            print(leaderboard)
             updateLeaderboardTxt()
             lastUser = user
             lastTimeBrianWasAssigned = time.time()
@@ -115,4 +127,4 @@ async def on_message(message):
                 await channel.send("You must wait another " + str(secondsToWait) + " seconds")
             #say how much more time must be waited
 
-client.run('NzQ5ODIzMzE1MjA3NTIwMzM3.X0xlYQ.FhPaHuRPb25sO5JbKR6gJHLI_f')
+client.run('Njk2MDQwMDA5MzE2MTcxODA3.Xoi7xg.XoNVal5svplJnTzvta8OgcWikU') #M
