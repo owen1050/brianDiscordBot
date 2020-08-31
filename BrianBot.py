@@ -8,6 +8,7 @@ lastUser = None
 firstTime = True
 leaderboard = {}
 channelText = "asking-for-brian"
+lastChangeUserTime = time.time()
 
 f = open("leaderboard.txt", "r")
 leadText = f.read()
@@ -107,7 +108,8 @@ def updateLongestTxt():
 
 @client.event        
 async def on_message(message):
-    global timeToWaitBetweenBrians, lastTimeBrianWasAssigned, lastUser, leaderboard, firstTime, channelText, longestTime, longestUN
+    global timeToWaitBetweenBrians, lastTimeBrianWasAssigned, lastUser, leaderboard, firstTime, channelText, longestTime, longestUN, lastChangeUserTime
+    print(message)
     channel = message.channel
     user = message.author
     guild = message.guild
@@ -130,10 +132,18 @@ async def on_message(message):
             else:
                 deltaT = (time.time() - lastTimeBrianWasAssigned)
 
-                if deltaT > longestTime:
+                if lastUser == lastMem:
+                    userDeltaT = time.time()- lastChangeUserTime
+                else:
+                    userDeltaT = time.time()- lastChangeUserTime
+                    lastChangeUserTime = time.time()
+
+
+
+                if userDeltaT > longestTime:
                     print("new long time")
                     longestUN = str(lastMem)
-                    longestTime = deltaT
+                    longestTime = userDeltaT
                     updateLongestTxt()
                     await channel.send(longestUN + " just set the new record for longest Brian streak with a time of " + str(round(longestTime/3600, 2)) + " hours")
 
