@@ -1,0 +1,13 @@
+
+try one: every 2 hours it says "react to this for brian role"
+react to its own message with specific brian emoji
+first one to react to it remove all other brians roles, make this person brian role, delete message
+
+
+this instead: if any message contains brian, reply
+		if its been more than 2 hours, that person becomes the only brian role
+		if its been less than 2 hours say how much time is left
+
+cool down so if you @the BrainBot it tells you how much longer you have to wait
+leaderboards on how many total hours each person has had the brian role
+longest streak of brian role
