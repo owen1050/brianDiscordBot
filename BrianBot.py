@@ -2,8 +2,28 @@ import discord, threading, requests, time
 
 client = discord.Client()
 lastTimeBrianWasAssigned = time.time()
-timeToWaitBetweenBrians = 20 * 60
+timeToWaitBetweenBrians = 5
 messageMustContain = ["brian", "please"]
+lastUser = None
+firstTime = True
+leaderboard = {}
+channelText = "asking-for-brian"
+
+f = open("leaderboard.txt", "r")
+leadText = f.read()
+f.close()
+
+while leadText.find("\n") >0:
+    eolI = leadText.find("\n")
+    line = leadText[0:eolI]
+
+    colI = line.find(":")
+    name = line[:colI]
+    time = line[colI+1:]
+
+    leaderboard[name] = float(time)
+    print(name, time)
+    leadText = leadText[eolI + 1:]
 
 
 @client.event
@@ -13,8 +33,11 @@ async def on_ready():
 
 
 async def removeAllBrians(brianRole):
+    lastMem = None
     for member in brianRole.members:
+        lastMem = member
         await member.remove_roles(brianRole)
+    return lastMem
 
 async def addUserToBrian(user, brianRole):
     await user.add_roles(brianRole)
@@ -31,22 +54,56 @@ def containsAllKeywords(message):
 
     return contAll
 
+def leaderboardToText():
+    global leaderboard
+    retStr = ""
+    for mem in leaderboard:
+        totalTime = round(leaderboard[mem]/3600, 2)
+        retStr = retStr + mem + " " * (40-len(mem))+ str(totalTime) + " hours\n"
+
+    return retStr
+
+def updateLeaderboardTxt():
+    global leaderboard
+    outStr = ""
+    for member in leaderboard:
+        outStr = outStr + str(member) + ":" + str(leaderboard[member]) + "\n"
+    f = open("leaderboard.txt", "w")
+    f.write(outStr)
+    f.close()
+
+
 @client.event        
 async def on_message(message):
-    global timeToWaitBetweenBrians, lastTimeBrianWasAssigned
+    global timeToWaitBetweenBrians, lastTimeBrianWasAssigned, lastUser, leaderboard, firstTime, channelText
     channel = message.channel
     user = message.author
     guild = message.guild
+    print("message")
+    brianRole = discord.utils.get(guild.roles, id = int(750022258432671935))
+    
+    if str(channel) == channelText and str(message.content).find("leaderboard") >= 0:
+        await channel.send(leaderboardToText())
 
-    brianRole = discord.utils.get(guild.roles, id = int(267495672041832448))
-        
-    if str(channel) == "asking-for-brian" and containsAllKeywords(message.content):
+    if str(channel) == channelText and containsAllKeywords(message.content):
         if time.time() - lastTimeBrianWasAssigned > timeToWaitBetweenBrians:
-            await removeAllBrians(brianRole)
+            lastMem = await removeAllBrians(brianRole)
             await addUserToBrian(user, brianRole)
-            lastTimeBrianWasAssigned = time.time()
+            
             await channel.send("The new Brian is " + str(user.nick))
             print("assigned new brian to:" + str(user.nick))
+
+            if firstTime:
+                firstTime = False
+            else:
+                if lastMem in leaderboard:
+                    leaderboard[lastMem] = leaderboard[lastMem] + (time.time() - lastTimeBrianWasAssigned)
+                else:
+                    leaderboard[lastMem] = (time.time() - lastTimeBrianWasAssigned)
+
+            updateLeaderboardTxt()
+            lastUser = user
+            lastTimeBrianWasAssigned = time.time()
             #say who lost it and who gained it
         else:
             pass
